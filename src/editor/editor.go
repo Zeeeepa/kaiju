@@ -65,7 +65,6 @@ import (
 	"kaiju/engine/collision"
 	"kaiju/engine/host_container"
 	"kaiju/engine/systems/console"
-	"kaiju/engine/systems/logging"
 	"kaiju/engine/ui"
 	"kaiju/klib"
 	"kaiju/matrix"
@@ -75,6 +74,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"weak"
 )
 
 const (
@@ -82,7 +82,7 @@ const (
 )
 
 type Editor struct {
-	container            *host_container.Container
+	container            weak.Pointer[host_container.Container]
 	bvh                  *collision.BVH
 	menu                 *editor_menu.Menu
 	statusBar            *status_bar.StatusBar
@@ -112,8 +112,8 @@ type Editor struct {
 
 func (e *Editor) Closed()                                        {}
 func (e *Editor) Tag() string                                    { return editor_cache.MainWindow }
-func (e *Editor) Container() *host_container.Container           { return e.container }
-func (e *Editor) Host() *engine.Host                             { return e.container.Host }
+func (e *Editor) Container() *host_container.Container           { return e.container.Value() }
+func (e *Editor) Host() *engine.Host                             { return e.container.Value().Host }
 func (e *Editor) StageManager() *stages.Manager                  { return &e.stageManager }
 func (e *Editor) UIManager() *ui.Manager                         { return &e.uiManager }
 func (e *Editor) ContentOpener() *content_opener.Opener          { return &e.contentOpener }
@@ -128,7 +128,7 @@ func (e *Editor) Events() *editor_interface.EditorEvents         { return &e.eve
 
 func (e *Editor) BVH() *collision.BVH { return e.bvh }
 
-func (e *Editor) RunOnHost(fn func()) { e.container.RunFunction(fn) }
+func (e *Editor) RunOnHost(fn func()) { e.Container().RunFunction(fn) }
 
 func (e *Editor) ReloadTabs(name string) {
 	for i := range e.tabContainers {
@@ -164,23 +164,24 @@ func (e *Editor) AvailableDataBindings() []codegen.GeneratedType {
 	return e.entityData
 }
 
-func New() *Editor {
-	logStream := logging.Initialize(nil)
+func New(container weak.Pointer[host_container.Container]) *Editor {
 	ed := &Editor{
+		container:      container,
 		assetImporters: asset_importer.NewImportRegistry(),
 		history:        memento.NewHistory(100),
 		bvh:            collision.NewBVH(),
 	}
-	setupEditorWindow(ed, logStream)
-	host := ed.container.Host
+	ed.RunOnHost(func() { addConsole(ed) })
+	host := ed.Host()
 	ed.uiManager.Init(host)
 	ed.stageManager = stages.NewManager(host, &ed.assetImporters, &ed.history)
 	ed.selection = selection.New(host, &ed.history)
 	registerAssetImporters(ed)
 	ed.contentOpener = content_opener.New(
-		&ed.assetImporters, ed.container, &ed.history)
+		&ed.assetImporters, ed.Container(), &ed.history)
 	registerContentOpeners(ed)
 	host.OnClose.Add(ed.SaveLayout)
+	ed.OpenProject()
 	return ed
 }
 

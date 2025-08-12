@@ -44,6 +44,7 @@ import (
 	"kaiju/engine/assets/asset_importer"
 	"kaiju/engine/assets/asset_info"
 	"kaiju/engine/host_container"
+	"weak"
 )
 
 var (
@@ -57,7 +58,7 @@ type ContentOpener interface {
 
 type Opener struct {
 	openers   []ContentOpener
-	container *host_container.Container
+	container weak.Pointer[host_container.Container]
 	importer  *asset_importer.ImportRegistry
 	history   *memento.History
 }
@@ -66,7 +67,7 @@ func New(importer *asset_importer.ImportRegistry,
 	container *host_container.Container, history *memento.History) Opener {
 	return Opener{
 		importer:  importer,
-		container: container,
+		container: weak.Make(container),
 		history:   history,
 	}
 }

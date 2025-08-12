@@ -105,29 +105,29 @@ func createShape(name, glb string, ed editor_interface.Editor, host *engine.Host
 }
 
 func (m *Menu) createCone() {
-	createShape("Cone", coneGLB, m.editor, m.container.Host)
+	createShape("Cone", coneGLB, m.editor, m.container.Value().Host)
 }
 
 func (m *Menu) createCube() {
-	createShape("Cube", cubeGLB, m.editor, m.container.Host)
+	createShape("Cube", cubeGLB, m.editor, m.container.Value().Host)
 }
 
 func (m *Menu) createCylinder() {
-	createShape("Cylinder", cylinderGLB, m.editor, m.container.Host)
+	createShape("Cylinder", cylinderGLB, m.editor, m.container.Value().Host)
 }
 
 func (m *Menu) createIcoSphere() {
-	createShape("Ico Sphere", ico_sphereGLB, m.editor, m.container.Host)
+	createShape("Ico Sphere", ico_sphereGLB, m.editor, m.container.Value().Host)
 }
 
 func (m *Menu) createPlane() {
-	createShape("Plane", planeGLB, m.editor, m.container.Host)
+	createShape("Plane", planeGLB, m.editor, m.container.Value().Host)
 }
 
 func (m *Menu) createSphere() {
-	createShape("Sphere", sphereGLB, m.editor, m.container.Host)
+	createShape("Sphere", sphereGLB, m.editor, m.container.Value().Host)
 }
 
 func (m *Menu) createTorus() {
-	createShape("Torus", torusGLB, m.editor, m.container.Host)
+	createShape("Torus", torusGLB, m.editor, m.container.Value().Host)
 }

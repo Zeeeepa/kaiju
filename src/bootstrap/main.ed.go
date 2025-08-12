@@ -41,9 +41,15 @@ package bootstrap
 
 import (
 	"kaiju/editor"
+	"kaiju/engine/host_container"
+	"kaiju/engine/systems/logging"
+	"weak"
 )
 
 func Main() {
-	editor := editor.New()
-	<-editor.Host().Done()
+	logStream := logging.Initialize(nil)
+	container := host_container.New("Kaiju Editor", logStream)
+	go container.Run(1280, 720, -1, -1)
+	container.RunFunction(func() { editor.New(weak.Make(container)) })
+	<-container.Host.Done()
 }

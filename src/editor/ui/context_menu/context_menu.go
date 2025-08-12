@@ -39,14 +39,15 @@ package context_menu
 
 import (
 	"kaiju/engine/host_container"
-	"kaiju/klib"
+	"kaiju/engine/ui"
 	"kaiju/engine/ui/markup"
 	"kaiju/engine/ui/markup/document"
-	"kaiju/engine/ui"
+	"kaiju/klib"
+	"weak"
 )
 
 type ContextMenu struct {
-	container *host_container.Container
+	container weak.Pointer[host_container.Container]
 	doc       *document.Document
 	uiMan     *ui.Manager
 	entries   []ContextMenuEntry
@@ -62,7 +63,7 @@ type ContextMenuEntry struct {
 
 func New(container *host_container.Container, uiMan *ui.Manager) *ContextMenu {
 	c := &ContextMenu{
-		container: container,
+		container: weak.Make(container),
 		uiMan:     uiMan,
 		entries:   []ContextMenuEntry{},
 	}
@@ -79,17 +80,18 @@ func NewEntry(id, label string, onClick func()) ContextMenuEntry {
 
 func (c *ContextMenu) reload() {
 	c.Hide()
-	c.container.Host.CreatingEditorEntities()
-	html := klib.MustReturn(c.container.Host.AssetDatabase().ReadText("editor/ui/context_menu.html"))
+	host := c.container.Value().Host
+	host.CreatingEditorEntities()
+	html := klib.MustReturn(host.AssetDatabase().ReadText("editor/ui/context_menu.html"))
 	funcMap := map[string]func(*document.Element){
 		"selectEntry": c.selectEntry,
 		"clickMiss":   c.clickMiss,
 	}
 	c.doc = markup.DocumentFromHTMLString(c.uiMan, html, "", c.entries, funcMap, nil)
 	m, _ := c.doc.GetElementById("contextMenu")
-	c.container.Host.DoneCreatingEditorEntities()
-	ww := float32(c.container.Host.Window.Width())
-	wh := float32(c.container.Host.Window.Height())
+	host.DoneCreatingEditorEntities()
+	ww := float32(host.Window.Width())
+	wh := float32(host.Window.Height())
 	ps := m.UIPanel.Base().Layout().PixelSize()
 	if c.x+ps.Width() > ww {
 		c.x = ww - ps.Width()
@@ -101,7 +103,7 @@ func (c *ContextMenu) reload() {
 }
 
 func (c *ContextMenu) Show(entries []ContextMenuEntry) {
-	mouse := &c.container.Host.Window.Mouse
+	mouse := &c.container.Value().Host.Window.Mouse
 	c.entries = entries
 	c.x = mouse.ScreenPosition().X()
 	c.y = mouse.ScreenPosition().Y()

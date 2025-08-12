@@ -44,7 +44,7 @@ import (
 )
 
 func setupConsole(ed *Editor) {
-	console.For(ed.container.Host).AddCommand("lua",
+	console.For(ed.Host()).AddCommand("lua",
 		"Show plugin vms that are running", func(*engine.Host, string) string {
 			sb := strings.Builder{}
 			for i := range ed.luaVMs {

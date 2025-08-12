@@ -44,7 +44,6 @@ import (
 	"kaiju/editor/ui/context_menu"
 	"kaiju/editor/ui/details_window"
 	"kaiju/editor/ui/editor_menu"
-	"kaiju/editor/ui/editor_window"
 	"kaiju/editor/ui/hierarchy"
 	"kaiju/editor/ui/log_window"
 	"kaiju/editor/ui/project_window"
@@ -54,8 +53,6 @@ import (
 	"kaiju/editor/viewport/controls"
 	"kaiju/editor/viewport/tools/transform_tools"
 	"kaiju/engine/assets"
-	"kaiju/engine/host_container"
-	"kaiju/engine/systems/logging"
 	"kaiju/matrix"
 	"kaiju/platform/profiler"
 	"kaiju/rendering"
@@ -65,18 +62,11 @@ import (
 )
 
 func addConsole(ed *Editor) {
-	host := ed.container.Host
+	host := ed.Host()
 	html_preview.SetupConsole(host)
 	profiler.SetupConsole(host)
 	tests.SetupConsole(host)
 	setupConsole(ed)
-}
-
-func setupEditorWindow(ed *Editor, logStream *logging.LogStream) {
-	ed.container = host_container.New("Kaiju Editor", logStream)
-	ed.container.Host.InitializeAudio()
-	editor_window.OpenWindow(ed, 1280, 720, -1, -1)
-	ed.RunOnHost(func() { addConsole(ed) })
 }
 
 func waitForProjectSelectWindow(ed *Editor) (string, error) {
@@ -96,10 +86,10 @@ func constructEditorUI(ed *Editor) {
 	ed.contentWindow = content_window.New(&ed.contentOpener, ed)
 	ed.detailsWindow = details_window.New(ed)
 	ed.contentDetailsWindow = content_details_window.New(ed)
-	ed.contextMenu = context_menu.New(ed.container, &ed.uiManager)
+	ed.contextMenu = context_menu.New(ed.Container(), &ed.uiManager)
 	ed.hierarchy = hierarchy.New(ed.Host(), &ed.selection,
 		hierarchyContextMenuActions(ed), ed.ReloadTabs)
-	ed.menu = editor_menu.New(ed.container, ed.logWindow, ed.contentWindow,
+	ed.menu = editor_menu.New(ed.Container(), ed.logWindow, ed.contentWindow,
 		ed.hierarchy, &ed.contentOpener, ed, &ed.uiManager)
 	ed.statusBar = status_bar.New(&ed.uiManager, func() {
 		ed.ReloadOrOpenTab("Log")
@@ -114,16 +104,16 @@ func constructEditorUI(ed *Editor) {
 	ed.Host().DoneCreatingEditorEntities()
 	ed.camera.SetMode(controls.EditorCameraMode3d, ed.Host())
 
-	leftContainer := tab_container.New(ed.container.Host, &ed.uiManager,
+	leftContainer := tab_container.New(ed.Host(), &ed.uiManager,
 		[]tab_container.TabContainerTab{
 			tab_container.NewTab(ed.hierarchy),
 		}, tab_container.SnapLeft)
-	bottomContainer := tab_container.New(ed.container.Host, &ed.uiManager,
+	bottomContainer := tab_container.New(ed.Host(), &ed.uiManager,
 		[]tab_container.TabContainerTab{
 			tab_container.NewTab(ed.contentWindow),
 			tab_container.NewTab(ed.logWindow),
 		}, tab_container.SnapBottom)
-	rightContainer := tab_container.New(ed.container.Host, &ed.uiManager,
+	rightContainer := tab_container.New(ed.Host(), &ed.uiManager,
 		[]tab_container.TabContainerTab{
 			tab_container.NewTab(ed.detailsWindow),
 			tab_container.NewTab(ed.contentDetailsWindow),

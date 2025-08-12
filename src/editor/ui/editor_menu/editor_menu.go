@@ -55,10 +55,11 @@ import (
 	"kaiju/klib"
 	"kaiju/platform/audio"
 	"log/slog"
+	"weak"
 )
 
 type Menu struct {
-	container       *host_container.Container
+	container       weak.Pointer[host_container.Container]
 	doc             *document.Document
 	isOpen          bool
 	logWindow       *log_window.LogWindow
@@ -81,7 +82,7 @@ func New(container *host_container.Container,
 	host := container.Host
 	html := klib.MustReturn(host.AssetDatabase().ReadText("editor/ui/menu.html"))
 	m := &Menu{
-		container:       container,
+		container:       weak.Make(container),
 		logWindow:       logWindow,
 		contentWindow:   contentWindow,
 		hierarchyWindow: hierarchyWindow,
@@ -190,7 +191,7 @@ func (m *Menu) openHierarchyWindow(*document.Element) {
 }
 
 func (m *Menu) openShaderDesignerWindow(*document.Element) {
-	shader_designer.New(shader_designer.StateHome, m.container.Host.LogStream)
+	shader_designer.New(shader_designer.StateHome, m.container.Value().Host.LogStream)
 }
 
 func (m *Menu) newEntity(*document.Element) {
